@@ -62,6 +62,7 @@ def deleteData(connection, deletionStatement):
     except:
         print("Error deleting data")
 
+
 """
 Runs query on database
 connection: sqlite3 database connection
@@ -78,13 +79,11 @@ def runQuery(connection, queryStatement):
         print("Error running query")
 
 
+def generateQuery(attributes, tables, condition):
+    attributeList = ', '.join(attributes)
+    table = ' JOIN '.join(tables)
 
-
-# def generateQuery(attributes, tables, condition):
-#     attributeList = ', '.join(attributes)
-#     table = ' JOIN '.join(tables)
-#
-#     result = "SELECT ", attributeList, "FROM ", table, "WHERE", condition
+    result = "SELECT ", attributeList, "FROM ", table, "WHERE", condition
 
 if __name__ == "__main__":
     createSchema()
