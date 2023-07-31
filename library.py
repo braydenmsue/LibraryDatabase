@@ -17,6 +17,31 @@ def createTable(connection, tableStatement):
     except:
         print("Error in table statement")
 
+def insertData(connection, insertStatement):
+    try:
+        assert (insertStatement != "")
+        cur = connection.cursor()
+        cur.execute(insertStatement)
+    except:
+        print("Error inserting data")
+
+def updateTable(connection, updateStatement):
+    try:
+        assert (updateStatement != "")
+        cur = connection.cursor()
+        cur.execute(updateStatement)
+    except:
+        print("Error updating table")
+
+
+def deleteData(connection, deletionStatement):
+    try:
+        assert (deletionStatement != "")
+        cur = connection.cursor()
+        cur.execute(deletionStatement)
+    except:
+        print("Error deleting data")
+
 """
 Runs query on database
 connection: sqlite3 database connection
@@ -33,7 +58,8 @@ def runQuery(connection, queryStatement):
         print("Error running query")
 
 
-
-
-
-
+# def generateQuery(attributes, tables, condition):
+#     attributeList = ', '.join(attributes)
+#     table = ' JOIN '.join(tables)
+#
+#     result = "SELECT ", attributeList, "FROM ", table, "WHERE", condition
