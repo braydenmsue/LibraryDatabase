@@ -30,6 +30,8 @@ while not done:
             # choice = input("borrow", result[0].title) y/n
             # if y:
             #   insert into borrows
+            # if n:
+            #   continue
     elif choice == '2':
         # input for book in borrows table
         # results = query
@@ -57,7 +59,4 @@ while not done:
     else:
         print("Invalid selection")
 
-
-sql = "CREATE TABLE Items(itemID);"
-library.createTable(conn, )
 conn.close()
