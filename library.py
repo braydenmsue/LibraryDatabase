@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+import random
 from datetime import datetime, timedelta
 
 
@@ -295,44 +296,16 @@ def makeAccount(connection):
         sql += "VALUES('" + str(nextID) + "', '" + firstName + "', '" + lastName + "', '" + dob + "');"
 
         cur.execute(sql)
-        print("Account#:", str(nextID), "made successfully")
+        print("Account made successfully")
         connection.commit()
         return str(nextID)
     except:
         print("Error making account")
         return
 
-def makeEmployee(connection, applicantID):
-    cur = connection.cursor()
-
-    cur.execute('SELECT MAX(employeeID) FROM Employee;')
-    maxID = cur.fetchone()[0]
-    nextID = int(maxID) + 1 if maxID else 1000  # Starting from 1000 if no items exist yet
-
-    try:
-        personRecord = findPersonID(connection, applicantID)
-        print(personRecord)
-        if personRecord:
-            personID = personRecord[0]
-            firstName = personRecord[1]
-            lastName = personRecord[2]
-            sql = "INSERT INTO Employee(" + ", ".join(dbAttributes['Employee'])\
-                  + ") VALUES('" + str(nextID) + "', '" + firstName + "', '" + lastName + "', '" + personID + "');"
-            cur.execute(sql)
-            print("Employee record for", firstName, lastName, "successfully created.")
-            connection.commit()
-            return True
-        else:
-            print("No record in Person table - please create an account first.")
-            return False
-    except:
-        print("Error in employee creation system")
-
-
-
 def findPersonID(connection, personID):
     cur = connection.cursor()
-    sql = "SELECT * FROM Person WHERE personID = '" + personID + "';"
+    sql = "SELECT personID FROM Person WHERE personID = '" + personID + "';"
     cur.execute(sql)
     result = cur.fetchone()
     if not result:
@@ -351,7 +324,7 @@ def findPersonID(connection, personID):
             return False
     else:
         print("ID: " + result[0] + " found.")
-        return result
+        return True
 
 
 
@@ -361,11 +334,9 @@ def borrowItem(connection, personID, itemID):
     dateDue = (borrowDate + timedelta(days=30)).strftime('%Y-%m-%d')
     borrowDate = borrowDate.strftime('%Y-%m-%d')
     itemRecords = searchItems(connection, '', '', itemID)
-    if itemRecords[0][4] == 0:
-        print("No copies of " + itemRecords[0][1] + " currently available.")
-        return
 
     try:
+        assert(itemRecords[0][4] == 1)
         sql = "INSERT INTO Borrows(" + ", ".join(dbAttributes['Borrows'][1:]) + ") "
         sql += "VALUES('" + personID + "', '" + itemID + "', '" + borrowDate + "', '" + dateDue + "', NULL, 0);"
         cur = connection.cursor()
@@ -404,8 +375,6 @@ def returnItem(connection, personID):
             else:
                 print("Invalid selection")
                 return False
-    else:
-        print("ID could not be determined.")
 
 def donateItem(connection):
     cur = connection.cursor()
@@ -417,9 +386,9 @@ def donateItem(connection):
     # Increment it by 1 to get the next available itemID
     next_item_id = int(max_item_id) + 1 if max_item_id else 1000  # Starting from 1000 if no items exist yet
 
-    title = capitalizeWords(input("Enter title: ").strip())
-    author = capitalizeWords(input("Enter author: ").strip())
-    item_type = capitalizeWords(input("Enter type: ").strip())
+    title = capitalizeWords(input("Enter title: "))
+    author = capitalizeWords(input("Enter author: "))
+    item_type = capitalizeWords(input("Enter type: "))
 
     try:
         # Insert the item data into the Items table
@@ -476,6 +445,27 @@ def participateInEvent(connection):
 
     except Exception as e:
         print("Error occurred:", e)
+
+def requestHelp(connection):
+    cur = connection.cursor()
+
+    # Get the count of employees in the database
+    cur.execute('SELECT COUNT(*) FROM Employee')
+    num_employees = cur.fetchone()[0]
+
+    if num_employees == 0:
+        print("No employees available to assist at the moment.")
+    else:
+        # Get a random employee from the database
+        random_employee_id = random.randint(2001, 2000 + num_employees)
+        cur.execute('SELECT firstName FROM Employee WHERE employeeID = ?', (str(random_employee_id),))
+        employee = cur.fetchone()
+
+        if employee:
+            first_name = employee[0]
+            print(f"{first_name} is on their way to assist you! Please wait a moment...")
+        else:
+            print("No employees available to assist at the moment.")
 
 if __name__ == "__main__":
     conn = sqlite3.connect('library.db')
