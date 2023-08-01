@@ -1,10 +1,18 @@
 import sqlite3
 import pandas as pd
-import os
+from datetime import datetime, timedelta
 
-#filePath = os.path.join(os.getcwd(), "library.db")
 conn = sqlite3.connect('library.db')
-cur = conn.cursor()
+
+dbAttributes = {'Items': ['itemID', 'title', 'author', 'type', 'available'],
+                'Borrows': ['personID', 'itemID', 'borrowDate', 'dateDue', 'returnDate', 'fineAmount'],
+                'Person': ['personID', 'firstName', 'lastName', 'birthDate'],
+                'Employee': ['employeeID', 'firstName', 'lastName', 'personID'],
+                'Participates': ['eventID', 'personID'],
+                'Event': ['eventID', 'type', 'audience', 'location'],
+                'Orders': ['orderID', 'employeeID', 'fID'],
+                'FutureItems': ['fID', 'title', 'author', 'type']
+                }
 
 def checkSchemaExists(cur):
     # Define the list of tables that should exist in the schema
@@ -126,7 +134,7 @@ def createSchema():
     return
     
 def insertInto(conn):
-    #cur = conn.cursor()
+    cur = conn.cursor()
     cur.execute('''
                 INSERT OR IGNORE INTO Items(itemID, title, author, type, available)
                 VALUES  ('1001', 'Love You Forever', 'Robert Munsch', 'Children', 1),
@@ -244,27 +252,96 @@ queryStatement: SQL statement in string
 def searchItems(connection, title, author, id = '-1'):
 
     condition = ""
-    attributes = ['ID', 'Title', 'Author', 'Type', 'Available']
     try:
         if id != '-1':
             condition = "WHERE itemID = '" + id + "';"
         else:
             condition = "WHERE title = '" + title + "' OR author = '" + author + "';"
         sql = "SELECT * FROM Items " + condition
-        print(sql)
 
         cur = connection.cursor()
         cur.execute(sql)
         results = cur.fetchall()
-        table = pd.DataFrame(results, columns=attributes)
-        print("-----------------------------------------------------------")
-        print(table.to_string(index=False))
-        print("-----------------------------------------------------------")
 
+        displayTable(results, 'Items')
         return results
     except:
         print("Error running query")
 
+def displayTable(records, tableName):
+    try:
+        table = pd.DataFrame(records, columns=dbAttributes[tableName])
+        print("\n")
+        topLine = "------------------------------  " + tableName + "  ------------------------------"
+        print(topLine)
+        print(table.to_string(index=False))
+        print("\n")
+
+    except:
+        print("Error displaying data")
+
+
+def findPersonID(connection, personID):
+    cur = connection.cursor()
+    sql = "SELECT personID FROM Person WHERE personID = '" + personID + "';"
+    result = cur.execute(sql)
+    if result == None:
+        choice = input("""ID not found, would you like to
+        (1) Register for an account
+        (2) Restart
+        (Any Other Key) Exit
+        """)
+        if choice == '1':
+            pass
+            # id = makeAccount()
+            # findPersonID(connection, id)
+        elif choice == '2':
+            findPersonID(connection, input("ID: "))
+        else:
+            print("Exiting.")
+            return False
+    else:
+        print("ID found.")
+        return True
+
+
+
+def borrowBook(connection, personID, itemID):
+
+    borrowDate = datetime.today()
+    dateDue = (borrowDate + timedelta(days=30)).strftime('%Y-%m-%d')
+    borrowDate = borrowDate.strftime('%Y-%m-%d')
+
+    try:
+        sql = "INSERT INTO Borrows(" + ", ".join(dbAttributes['Borrows']) + ") "
+        sql += "VALUES('" + personID + "', '" + itemID + "', '" + borrowDate + "', '" + dateDue + "', NULL, 0);"
+        print(sql)
+        cur = connection.cursor()
+        cur.execute(sql)
+        print("Item borrowed successfully\n")
+        return dateDue
+    except:
+        print("Error borrowing item\n")
+        return
+
+def returnItem(connection, personID):
+    cur = connection.cursor()
+    if findPersonID(connection, personID):
+        sql = "SELECT * FROM Borrows WHERE personID = '" + personID + "';"
+        print("Your Borrowed Items:\n")
+        result = cur.execute(sql)
+        displayTable(result, 'Borrows')
+        choice = input("ID of record you would like to return: ")
+        sqlSelect = "SELECT * FROM Borrows WHERE borrowID = '" + choice + "';"
+        resultFinal = cur.execute(sqlSelect)
+        if resultFinal:
+            sqlDrop = "DELETE FROM Borrows WHERE personID = '" + personID + "' AND borrowID = '" + resultFinal[0][0] + "';"
+            cur.execute(sqlDrop)
+            connection.commit()
+            return True
+        else:
+            print("Invalid selection")
+            return False
 
 if __name__ == "__main__":
     createSchema()
