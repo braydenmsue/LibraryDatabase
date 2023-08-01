@@ -30,15 +30,15 @@ while not done:
             results = library.searchItems(conn, title, author, selectID)
             choice = ''
             while choice not in ['Y', 'N']:
-                choice = input("Borrow this book (y/n)?").upper()
+                choice = input("Borrow this book (y/n)?: ").upper()
                 if choice == 'Y':
                     personID = input("Please enter your ID: ")
                     if library.findPersonID(conn, personID):
                         dateDue = library.borrowBook(conn, personID, results[0][0])
                         if dateDue:
                             print("Please return by " + dateDue)
-                        else:
-                            choice = 'retry'
+                    else:
+                        choice = 'retry'
 
                 elif choice == 'N':
                     continue
