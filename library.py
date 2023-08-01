@@ -248,8 +248,9 @@ Runs query Items table by title and author
 connection: sqlite3 database connection
 queryStatement: SQL statement in string
 """
-def searchItems(connection, title, author, id = '-1'):
 
+
+def searchItems(connection, title, author, id = '-1'):
     condition = ""
     try:
         if id != '-1':
@@ -326,13 +327,15 @@ def findPersonID(connection, personID):
 
 
 
-def borrowBook(connection, personID, itemID):
+def borrowItem(connection, personID, itemID):
 
     borrowDate = datetime.today()
     dateDue = (borrowDate + timedelta(days=30)).strftime('%Y-%m-%d')
     borrowDate = borrowDate.strftime('%Y-%m-%d')
+    itemRecords = searchItems(connection, '', '', itemID)
 
     try:
+        assert(itemRecords[0][4] == 1)
         sql = "INSERT INTO Borrows(" + ", ".join(dbAttributes['Borrows'][1:]) + ") "
         sql += "VALUES('" + personID + "', '" + itemID + "', '" + borrowDate + "', '" + dateDue + "', NULL, 0);"
         cur = connection.cursor()
@@ -349,20 +352,28 @@ def returnItem(connection, personID):
     cur = connection.cursor()
     if findPersonID(connection, personID):
         sql = "SELECT * FROM Borrows WHERE personID = '" + personID + "';"
-        print("Your Borrowed Items:\n")
-        result = cur.execute(sql)
-        displayTable(result, 'Borrows')
-        choice = input("ID of record you would like to return: ")
-        sqlSelect = "SELECT * FROM Borrows WHERE borrowID = '" + choice + "';"
-        resultFinal = cur.execute(sqlSelect)
-        if resultFinal:
-            sqlDrop = "DELETE FROM Borrows WHERE personID = '" + personID + "' AND borrowID = '" + resultFinal[0][0] + "';"
-            cur.execute(sqlDrop)
-            connection.commit()
-            return True
-        else:
-            print("Invalid selection")
+        cur.execute(sql)
+        results = cur.fetchall()
+        if not results:
+            print("No items currently borrowed.")
             return False
+        else:
+            print("Your Borrowed Items:\n")
+            displayTable(results, 'Borrows')
+            returnID = input("ID of record you would like to return: ")
+            sqlSelect = "SELECT * FROM Borrows WHERE borrowID = '" + returnID + "';"
+            cur.execute(sqlSelect)
+            resultFinal = cur.fetchone()
+            if resultFinal:
+                sqlDrop = "DELETE FROM Borrows WHERE personID = '" + personID + "' AND borrowID = '" + returnID + "';"
+                cur.execute(sqlDrop)
+                cur.execute("UPDATE Items SET available = 1 WHERE itemID = '" + str(resultFinal[2]) + "';")
+                connection.commit()
+                print("Item returned successfully.")
+                return True
+            else:
+                print("Invalid selection")
+                return False
 
 def donateItem(connection):
     cur = connection.cursor()
