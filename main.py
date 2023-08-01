@@ -4,6 +4,7 @@ import library
 library.createSchema()
 
 conn = sqlite3.connect('library.db')
+library.insertInto(conn)
 print("Connection to library.db successful")
 cursor = conn.cursor()
 
@@ -34,7 +35,7 @@ while not done:
                 if choice == 'Y':
                     personID = input("Please enter your ID: ")
                     if library.findPersonID(conn, personID):
-                        dateDue = library.borrowBook(conn, personID, results[0][0])
+                        dateDue = library.borrowItem(conn, personID, results[0][0])
                         if dateDue:
                             print("Please return by " + dateDue)
                     else:
