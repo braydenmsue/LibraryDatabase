@@ -2,14 +2,13 @@ import sqlite3
 import pandas as pd
 from datetime import datetime, timedelta
 
-conn = sqlite3.connect('library.db')
 
 dbAttributes = {'Items': ['itemID', 'title', 'author', 'type', 'available'],
                 'Borrows': ['personID', 'itemID', 'borrowDate', 'dateDue', 'returnDate', 'fineAmount'],
                 'Person': ['personID', 'firstName', 'lastName', 'birthDate'],
                 'Employee': ['employeeID', 'firstName', 'lastName', 'personID'],
                 'Participates': ['eventID', 'personID'],
-                'Event': ['eventID', 'type', 'audience', 'location'],
+                'Event': ['eventID', 'type', 'audience', 'date', 'location'],
                 'Orders': ['orderID', 'employeeID', 'fID'],
                 'FutureItems': ['fID', 'title', 'author', 'type']
                 }
@@ -182,7 +181,7 @@ def insertInto(conn):
 
     cur.execute('''
         INSERT OR IGNORE INTO Event(eventID, type, audience, date, location)
-        VALUES ('2001', 'Book Launch', 'Children', '2023-07-31', 'Library Hall'),
+        VALUES  ('2001', 'Book Launch', 'Children', '2023-07-31', 'Library Hall'),
                 ('2002', 'Workshop', 'Teens', '2023-08-05', 'Conference Room'),
                 ('2003', 'Reading Session', 'Adults', '2023-08-12', 'Main Reading Area'),
                 ('2004', 'Author Talk', 'All', '2023-08-17', 'Auditorium'),
@@ -342,12 +341,85 @@ def returnItem(connection, personID):
         else:
             print("Invalid selection")
             return False
+        
+def donateItem(connection):
+    cur = connection.cursor()
+
+    # Get the maximum existing itemID from the database
+    cur.execute('SELECT MAX(itemID) FROM Items')
+    max_item_id = cur.fetchone()[0]
+    
+    # Increment it by 1 to get the next available itemID
+    next_item_id = int(max_item_id) + 1 if max_item_id else 1000  # Starting from 1000 if no items exist yet
+
+    title = capitalizeWords(input("Enter title: "))
+    author = capitalizeWords(input("Enter author: "))
+    item_type = capitalizeWords(input("Enter type: "))
+
+    try:
+        # Insert the item data into the Items table
+        cur.execute('''
+            INSERT INTO Items(itemID, title, author, type, available)
+            VALUES (?, ?, ?, ?, 1)
+        ''', (str(next_item_id), title, author, item_type))
+        connection.commit()
+        print("Item donated successfully.")
+    except sqlite3.Error as e:
+        print("Error donating item:", e)
+        connection.rollback()
+
+def participateInEvent(connection):
+    try:
+        # Query all events
+        sql = "SELECT * FROM Event;"
+        cur = connection.cursor()
+        cur.execute(sql)
+        events = cur.fetchall()
+
+        # Display the events
+        displayTable(events, 'Event')
+
+        event_id = input("Enter the eventID of the event you want to participate in: ")
+        # Check if the event ID is valid
+        valid_event_ids = [event[0] for event in events]
+
+        if event_id not in valid_event_ids:
+            print("Invalid eventID. Please try again.")
+            return
+        
+        userID = input("Please enter your account ID: ")
+        # Check if the userID is valid
+        sql_person = "SELECT * FROM Person WHERE personID = ?;"
+        cur.execute(sql_person, (userID,))
+        person = cur.fetchone()
+
+        if person is None:
+            print("Invalid userID. The provided account ID does not exist. Please try again.")
+            return
+
+        # Ask the user to confirm participation
+        confirm_participation = input("Do you want to participate in this event? (y/n): ")
+
+        if confirm_participation.lower() == 'y':
+            # Insert the participation record into the Participates table
+            sql_insert_participation = "INSERT INTO Participates (eventID, personID) VALUES (?, ?);"
+            cur.execute(sql_insert_participation, (event_id, userID))
+            connection.commit()
+            print("You have successfully registered for the event.")
+        else:
+            print("Registration canceled.")
+
+    except Exception as e:
+        print("Error occurred:", e)
 
 if __name__ == "__main__":
+    conn = sqlite3.connect('library.db')
+    cur = conn.cursor()
     createSchema()
     insertInto(conn)
 
-    cur.execute("SELECT * FROM Person")
+    cur.execute("SELECT * FROM Event")
     rows = cur.fetchall()
 
     print(rows)
+    displayTable(rows, "Event")

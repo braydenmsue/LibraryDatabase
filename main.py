@@ -51,11 +51,11 @@ while not done:
         library.returnItem(conn, userID)
 
     elif choice == '3':
-        pass
         # input values of item, form into tuple
-        # insert into items
+        library.donateItem(conn)
+
     elif choice == '4':
-        pass
+        library.participateInEvent(conn)
         # query all events
         # input to pick one
         # input y/n to register
