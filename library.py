@@ -295,16 +295,44 @@ def makeAccount(connection):
         sql += "VALUES('" + str(nextID) + "', '" + firstName + "', '" + lastName + "', '" + dob + "');"
 
         cur.execute(sql)
-        print("Account made successfully")
+        print("Account#:", str(nextID), "made successfully")
         connection.commit()
         return str(nextID)
     except:
         print("Error making account")
         return
 
+def makeEmployee(connection, applicantID):
+    cur = connection.cursor()
+
+    cur.execute('SELECT MAX(employeeID) FROM Employee;')
+    maxID = cur.fetchone()[0]
+    nextID = int(maxID) + 1 if maxID else 1000  # Starting from 1000 if no items exist yet
+
+    try:
+        personRecord = findPersonID(connection, applicantID)
+        print(personRecord)
+        if personRecord:
+            personID = personRecord[0]
+            firstName = personRecord[1]
+            lastName = personRecord[2]
+            sql = "INSERT INTO Employee(" + ", ".join(dbAttributes['Employee'])\
+                  + ") VALUES('" + str(nextID) + "', '" + firstName + "', '" + lastName + "', '" + personID + "');"
+            cur.execute(sql)
+            print("Employee record for", firstName, lastName, "successfully created.")
+            connection.commit()
+            return True
+        else:
+            print("No record in Person table - please create an account first.")
+            return False
+    except:
+        print("Error in employee creation system")
+
+
+
 def findPersonID(connection, personID):
     cur = connection.cursor()
-    sql = "SELECT personID FROM Person WHERE personID = '" + personID + "';"
+    sql = "SELECT * FROM Person WHERE personID = '" + personID + "';"
     cur.execute(sql)
     result = cur.fetchone()
     if not result:
@@ -323,7 +351,7 @@ def findPersonID(connection, personID):
             return False
     else:
         print("ID: " + result[0] + " found.")
-        return True
+        return result
 
 
 
@@ -376,6 +404,8 @@ def returnItem(connection, personID):
             else:
                 print("Invalid selection")
                 return False
+    else:
+        print("ID could not be determined.")
 
 def donateItem(connection):
     cur = connection.cursor()
