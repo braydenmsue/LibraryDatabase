@@ -39,10 +39,10 @@ while not done:
         author = library.capitalizeWords(input("Author: ").strip())
         results = library.searchItems(conn, title, author)
         if len(results) > 0:
-            selectID = input("borrowID of required item (x to cancel): ")
+            selectID = input("itemID of required item (x to cancel): ")
             if selectID == 'x':
                 continue
-            if selectID not in (itemIDs):
+            if selectID not in itemIDs:
                 print("Invalid itemID. Please enter a correct itemID.")
                 continue
             results = library.searchItems(conn, title, author, selectID)
