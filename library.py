@@ -216,33 +216,6 @@ def insertInto(conn):
     conn.commit()
 
 
-def insertData(connection, insertStatement):
-    try:
-        assert (insertStatement != "")
-        cur = connection.cursor()
-        cur.execute(insertStatement)
-    except:
-        print("Error inserting data")
-
-
-def updateTable(connection, updateStatement):
-    try:
-        assert (updateStatement != "")
-        cur = connection.cursor()
-        cur.execute(updateStatement)
-    except:
-        print("Error updating table")
-
-
-def deleteData(connection, deletionStatement):
-    try:
-        assert (deletionStatement != "")
-        cur = connection.cursor()
-        cur.execute(deletionStatement)
-    except:
-        print("Error deleting data")
-
-
 def capitalizeWords(phraseString):
     wordList = phraseString.split(' ')
     wordListC = [word.capitalize() for word in wordList]
@@ -315,6 +288,12 @@ def makeAccount(connection):
 
 def makeEmployee(connection, applicantID):
     cur = connection.cursor()
+
+    cur.execute("SELECT employeeID FROM Employee WHERE personID = '" + applicantID + "';")
+    existingEmployee = cur.fetchone()
+    if existingEmployee:
+        print("You have already been registered as an employee.")
+        return
 
     cur.execute('SELECT MAX(employeeID) FROM Employee;')
     maxID = cur.fetchone()[0]
@@ -488,7 +467,7 @@ def participateInEvent(connection):
     except Exception as e:
         print("Error occurred:", e)
 
-
+# Find random employee to give assistance, outputs message
 def requestHelp(connection):
     cur = connection.cursor()
 
