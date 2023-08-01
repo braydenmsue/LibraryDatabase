@@ -26,7 +26,7 @@ while not done:
         author = library.capitalizeWords(input("Author: ").strip())
         results = library.searchItems(conn, title, author)
         if len(results) > 0:
-            selectID = input("ID of required item (x to cancel): ")
+            selectID = input("borrowID of required item (x to cancel): ")
             if selectID == 'x':
                 continue
             results = library.searchItems(conn, title, author, selectID)
@@ -63,9 +63,26 @@ while not done:
         # input y/n to register
         # if y: insert into participates
     elif choice == '5':
-        pass
-        # find record in people, if not there insert record
-        # insert record from people into employee
+        volunteerID = ''
+        while volunteerID != 'done':
+            volunteerID = input("What is your ID? (x to cancel): ").strip()
+            if volunteerID == 'x':
+                volunteerID = 'done'
+            elif library.findPersonID(conn, volunteerID):
+                confirm = ''
+                while confirm not in ['Y', 'N']:
+                    confirm = input("ID found, make employee record (y/n)?: ").upper().strip()
+                    if confirm == 'Y':
+                        library.makeEmployee(conn, volunteerID)
+                        print("Employee record created.")
+                        volunteerID = 'done'
+                    elif confirm == 'N':
+                        continue
+                    else:
+                        print("Please enter Y (yes) or N (no).")
+            else:
+                print("Please re-enter ID")
+
     elif choice == '6':
         pass
         # query employees, input to pick one
