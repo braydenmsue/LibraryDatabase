@@ -3,7 +3,6 @@ import pandas as pd
 import random
 from datetime import datetime, timedelta
 
-
 dbAttributes = {'Items': ['itemID', 'title', 'author', 'type', 'available'],
                 'Borrows': ['borrowID', 'personID', 'itemID', 'borrowDate', 'dateDue', 'returnDate', 'fineAmount'],
                 'Person': ['personID', 'firstName', 'lastName', 'birthDate'],
@@ -13,6 +12,7 @@ dbAttributes = {'Items': ['itemID', 'title', 'author', 'type', 'available'],
                 'Orders': ['orderID', 'employeeID', 'fID'],
                 'FutureItems': ['fID', 'title', 'author', 'type']
                 }
+
 
 def checkSchemaExists(cur):
     # Define the list of tables that should exist in the schema
@@ -36,11 +36,14 @@ def checkSchemaExists(cur):
 
     return True
 
+
 """
 Executes CREATE TABLE statement
 connection: sqlite3 database connection
 tableStatement: SQL statement in string
 """
+
+
 def createSchema():
     conn = sqlite3.connect('library.db')
     cur = conn.cursor()
@@ -56,7 +59,7 @@ def createSchema():
                     available INTEGER
                 )    
             ''')
-        
+
         cur.execute('''
         CREATE TABLE IF NOT EXISTS Borrows (
             borrowID INTEGER PRIMARY KEY,
@@ -70,7 +73,7 @@ def createSchema():
             FOREIGN KEY (itemID) REFERENCES Items(itemID)
             )
         ''')
-        
+
         cur.execute('''
         CREATE TABLE IF NOT EXISTS Person (
             personID CHAR(11) PRIMARY KEY,
@@ -132,7 +135,8 @@ def createSchema():
     conn.commit()
 
     return
-    
+
+
 def insertInto(conn):
     cur = conn.cursor()
     cur.execute('''
@@ -148,7 +152,7 @@ def insertInto(conn):
                         ('1009', 'Pigs', 'Robert Munsch', 'Children', 1),
                         ('1010', 'The Battle of the Labyrinth', 'Rick Riordan', 'Fantasy', 1)
                 ''')
-    #print("Inserted items into Items")
+    # print("Inserted items into Items")
 
     cur.execute('''
         INSERT OR IGNORE INTO Person(personID, firstName, lastName, birthDate)
@@ -168,7 +172,7 @@ def insertInto(conn):
                 ('1014', 'Ethan', 'Tanaka', '1987-03-25'),
                 ('1015', 'Emma', 'Chen', '1994-06-02')
     ''')
-    #print("Inserted records into Person")
+    # print("Inserted records into Person")
 
     cur.execute('''
         INSERT OR IGNORE INTO Employee(employeeID, firstName, lastName, personID)
@@ -178,7 +182,7 @@ def insertInto(conn):
                 ('2004', 'Emily', 'Williams', '1004'),
                 ('2005', 'Daniel', 'Brown', '1005')
     ''')
-    #print("Inserted records into Employee")
+    # print("Inserted records into Employee")
 
     cur.execute('''
         INSERT OR IGNORE INTO Event(eventID, type, audience, date, location)
@@ -193,8 +197,8 @@ def insertInto(conn):
                 ('2009', 'Author Talk', 'Adults', '2023-09-07', 'Auditorium'),
                 ('2010', 'Storytelling', 'Children', '2023-09-10', 'Children Section')
                 ''')
-    #print("Inserted records into Event")
-    
+    # print("Inserted records into Event")
+
     cur.execute('''
         INSERT OR IGNORE INTO FutureItems(fID, title, author, type)
         VALUES  ('3001', 'Lord of the Flies', 'William Golding', 'Fiction'),
@@ -208,8 +212,9 @@ def insertInto(conn):
                 ('3009', 'Artificial Intelligence: A Modern Approach', 'Stuart Russell, Peter Norvig', 'Computer Science'),
                 ('3010', 'Data Science from Scratch', 'Joel Grus', 'Computer Science')
                 ''')
-    #print("Inserted records into FutureItems")
+    # print("Inserted records into FutureItems")
     conn.commit()
+
 
 def insertData(connection, insertStatement):
     try:
@@ -218,6 +223,7 @@ def insertData(connection, insertStatement):
         cur.execute(insertStatement)
     except:
         print("Error inserting data")
+
 
 def updateTable(connection, updateStatement):
     try:
@@ -236,6 +242,7 @@ def deleteData(connection, deletionStatement):
     except:
         print("Error deleting data")
 
+
 def capitalizeWords(phraseString):
     wordList = phraseString.split(' ')
     wordListC = [word.capitalize() for word in wordList]
@@ -251,7 +258,7 @@ queryStatement: SQL statement in string
 """
 
 
-def searchItems(connection, title, author, id = '-1'):
+def searchItems(connection, title, author, id='-1'):
     condition = ""
     try:
         if id != '-1':
@@ -269,6 +276,7 @@ def searchItems(connection, title, author, id = '-1'):
     except:
         print("Error running query")
 
+
 def displayTable(records, tableName):
     try:
         table = pd.DataFrame(records, columns=dbAttributes[tableName])
@@ -280,6 +288,7 @@ def displayTable(records, tableName):
 
     except:
         print("Error displaying data")
+
 
 def makeAccount(connection):
     cur = connection.cursor()
@@ -296,16 +305,44 @@ def makeAccount(connection):
         sql += "VALUES('" + str(nextID) + "', '" + firstName + "', '" + lastName + "', '" + dob + "');"
 
         cur.execute(sql)
-        print("Account made successfully")
+        print("Account#:", str(nextID), "made successfully")
         connection.commit()
         return str(nextID)
     except:
         print("Error making account")
         return
 
+
+def makeEmployee(connection, applicantID):
+    cur = connection.cursor()
+
+    cur.execute('SELECT MAX(employeeID) FROM Employee;')
+    maxID = cur.fetchone()[0]
+    nextID = int(maxID) + 1 if maxID else 1000  # Starting from 1000 if no items exist yet
+
+    try:
+        personRecord = findPersonID(connection, applicantID)
+        print(personRecord)
+        if personRecord:
+            personID = personRecord[0]
+            firstName = personRecord[1]
+            lastName = personRecord[2]
+            sql = "INSERT INTO Employee(" + ", ".join(dbAttributes['Employee']) \
+                  + ") VALUES('" + str(nextID) + "', '" + firstName + "', '" + lastName + "', '" + personID + "');"
+            cur.execute(sql)
+            print("Employee record for", firstName, lastName, "successfully created.")
+            connection.commit()
+            return True
+        else:
+            print("No record in Person table - please create an account first.")
+            return False
+    except:
+        print("Error in employee creation system")
+
+
 def findPersonID(connection, personID):
     cur = connection.cursor()
-    sql = "SELECT personID FROM Person WHERE personID = '" + personID + "';"
+    sql = "SELECT * FROM Person WHERE personID = '" + personID + "';"
     cur.execute(sql)
     result = cur.fetchone()
     if not result:
@@ -324,19 +361,19 @@ def findPersonID(connection, personID):
             return False
     else:
         print("ID: " + result[0] + " found.")
-        return True
-
+        return result
 
 
 def borrowItem(connection, personID, itemID):
-
     borrowDate = datetime.today()
     dateDue = (borrowDate + timedelta(days=30)).strftime('%Y-%m-%d')
     borrowDate = borrowDate.strftime('%Y-%m-%d')
     itemRecords = searchItems(connection, '', '', itemID)
+    if itemRecords[0][4] == 0:
+        print("No copies of " + itemRecords[0][1] + " currently available.")
+        return
 
     try:
-        assert(itemRecords[0][4] == 1)
         sql = "INSERT INTO Borrows(" + ", ".join(dbAttributes['Borrows'][1:]) + ") "
         sql += "VALUES('" + personID + "', '" + itemID + "', '" + borrowDate + "', '" + dateDue + "', NULL, 0);"
         cur = connection.cursor()
@@ -348,6 +385,7 @@ def borrowItem(connection, personID, itemID):
     except:
         print("Error borrowing item\n")
         return
+
 
 def returnItem(connection, personID):
     cur = connection.cursor()
@@ -375,6 +413,9 @@ def returnItem(connection, personID):
             else:
                 print("Invalid selection")
                 return False
+    else:
+        print("ID could not be determined.")
+
 
 def donateItem(connection):
     cur = connection.cursor()
@@ -382,13 +423,13 @@ def donateItem(connection):
     # Get the maximum existing itemID from the database
     cur.execute('SELECT MAX(itemID) FROM Items')
     max_item_id = cur.fetchone()[0]
-    
+
     # Increment it by 1 to get the next available itemID
     next_item_id = int(max_item_id) + 1 if max_item_id else 1000  # Starting from 1000 if no items exist yet
 
-    title = capitalizeWords(input("Enter title: "))
-    author = capitalizeWords(input("Enter author: "))
-    item_type = capitalizeWords(input("Enter type: "))
+    title = capitalizeWords(input("Enter title: ").strip())
+    author = capitalizeWords(input("Enter author: ").strip())
+    item_type = capitalizeWords(input("Enter type: ").strip())
 
     try:
         # Insert the item data into the Items table
@@ -401,6 +442,7 @@ def donateItem(connection):
     except sqlite3.Error as e:
         print("Error donating item:", e)
         connection.rollback()
+
 
 def participateInEvent(connection):
     try:
@@ -420,7 +462,7 @@ def participateInEvent(connection):
         if event_id not in valid_event_ids:
             print("Invalid eventID. Please try again.")
             return
-        
+
         userID = input("Please enter your account ID: ")
         # Check if the userID is valid
         sql_person = "SELECT * FROM Person WHERE personID = ?;"
@@ -446,6 +488,7 @@ def participateInEvent(connection):
     except Exception as e:
         print("Error occurred:", e)
 
+
 def requestHelp(connection):
     cur = connection.cursor()
 
@@ -466,15 +509,3 @@ def requestHelp(connection):
             print(f"{first_name} is on their way to assist you! Please wait a moment...")
         else:
             print("No employees available to assist at the moment.")
-
-if __name__ == "__main__":
-    conn = sqlite3.connect('library.db')
-    cur = conn.cursor()
-    createSchema()
-    insertInto(conn)
-
-    cur.execute("SELECT * FROM Event")
-    rows = cur.fetchall()
-
-    print(rows)
-    displayTable(rows, "Event")
