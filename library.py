@@ -3,6 +3,8 @@ import pandas as pd
 import random
 from datetime import datetime, timedelta
 
+# Dictionary (key = table name, value = list of attributes)
+# Primarily used to generate DataFrames, but comma separated strings also formed via ", ".join(dbAttributes['tableName']
 dbAttributes = {'Items': ['itemID', 'title', 'author', 'type', 'available'],
                 'Borrows': ['borrowID', 'personID', 'itemID', 'borrowDate', 'dateDue', 'returnDate', 'fineAmount'],
                 'Person': ['personID', 'firstName', 'lastName', 'birthDate'],
@@ -13,7 +15,7 @@ dbAttributes = {'Items': ['itemID', 'title', 'author', 'type', 'available'],
                 'FutureItems': ['fID', 'title', 'author', 'type']
                 }
 
-
+# Helper function for createSchema, returns bool
 def checkSchemaExists(cur):
     # Define the list of tables that should exist in the schema
     required_tables = [
@@ -37,13 +39,7 @@ def checkSchemaExists(cur):
     return True
 
 
-"""
-Executes CREATE TABLE statement
-connection: sqlite3 database connection
-tableStatement: SQL statement in string
-"""
-
-
+# Initializes database by executing a series of CREATE TABLE statements
 def createSchema():
     conn = sqlite3.connect('library.db')
     cur = conn.cursor()
@@ -136,7 +132,7 @@ def createSchema():
 
     return
 
-
+# Populated tables with example data using a series of INSERT INTO statements
 def insertInto(conn):
     cur = conn.cursor()
     cur.execute('''
@@ -215,7 +211,7 @@ def insertInto(conn):
     # print("Inserted records into FutureItems")
     conn.commit()
 
-
+# Capitalizes each word in a space separated string to standardize before searching
 def capitalizeWords(phraseString):
     wordList = phraseString.split(' ')
     wordListC = [word.capitalize() for word in wordList]
@@ -223,14 +219,11 @@ def capitalizeWords(phraseString):
 
     return result
 
-
 """
-Runs query Items table by title and author
-connection: sqlite3 database connection
-queryStatement: SQL statement in string
+Returns a single record from Items
+title, author: user inputs for search values
+id (optional): returns the record with unique item id
 """
-
-
 def searchItems(connection, title, author, id='-1'):
     condition = ""
     try:
@@ -249,7 +242,9 @@ def searchItems(connection, title, author, id='-1'):
     except:
         print("Error running query")
 
-
+# Takes tuples from sqlite3 fetching and organizes into a pandas DataFrame before displaying
+# records: list of tuples
+# tableName: string name of table - used for dictionary lookup
 def displayTable(records, tableName):
     try:
         table = pd.DataFrame(records, columns=dbAttributes[tableName])
@@ -263,12 +258,14 @@ def displayTable(records, tableName):
         print("Error displaying data")
 
 
+# Insert user inputted information into a record in Person
 def makeAccount(connection):
     cur = connection.cursor()
     print("Please enter the following information.")
     firstName = input("First Name: ").capitalize()
     lastName = input("Last Name: ").capitalize()
     dob = input("Date of Birth (YYYY-MM-DD): ")
+    # unique id calculated by max(id)+1
     cur.execute('SELECT MAX(personID) FROM Person;')
     maxID = cur.fetchone()[0]
     nextID = int(maxID) + 1 if maxID else 1000  # Starting from 1000 if no items exist yet
@@ -285,16 +282,19 @@ def makeAccount(connection):
         print("Error making account")
         return
 
-
+# Find record from Person and add record in Employee, assigning a new employeeID
+# returns True (success) or False (Failure)
 def makeEmployee(connection, applicantID):
     cur = connection.cursor()
 
+    # Check if employee record already exists for applicant
     cur.execute("SELECT employeeID FROM Employee WHERE personID = '" + applicantID + "';")
     existingEmployee = cur.fetchone()
     if existingEmployee:
         print("You have already been registered as an employee.")
         return
 
+    # Generate unique employeeID
     cur.execute('SELECT MAX(employeeID) FROM Employee;')
     maxID = cur.fetchone()[0]
     nextID = int(maxID) + 1 if maxID else 1000  # Starting from 1000 if no items exist yet
@@ -302,6 +302,7 @@ def makeEmployee(connection, applicantID):
     try:
         personRecord = findPersonID(connection, applicantID)
         print(personRecord)
+        # If the record exists in Person, take the same personID, firstName, and lastName values
         if personRecord:
             personID = personRecord[0]
             firstName = personRecord[1]
@@ -318,7 +319,8 @@ def makeEmployee(connection, applicantID):
     except:
         print("Error in employee creation system")
 
-
+# Query Person table for given personID
+# If found, returns record for that personID
 def findPersonID(connection, personID):
     cur = connection.cursor()
     sql = "SELECT * FROM Person WHERE personID = '" + personID + "';"
