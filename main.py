@@ -84,9 +84,7 @@ while not done:
                 print("Please re-enter ID")
 
     elif choice == '6':
-        pass
-        # query employees, input to pick one
-        # print(name, "is on their way!")
+        library.requestHelp(conn)
 
     elif choice == 'x':
         print("Exiting application.")
