@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 conn = sqlite3.connect('library.db')
 
 dbAttributes = {'Items': ['itemID', 'title', 'author', 'type', 'available'],
-                'Borrows': ['personID', 'itemID', 'borrowDate', 'dateDue', 'returnDate', 'fineAmount'],
+                'Borrows': ['borrowID', 'personID', 'itemID', 'borrowDate', 'dateDue', 'returnDate', 'fineAmount'],
                 'Person': ['personID', 'firstName', 'lastName', 'birthDate'],
                 'Employee': ['employeeID', 'firstName', 'lastName', 'personID'],
                 'Participates': ['eventID', 'personID'],
@@ -280,28 +280,49 @@ def displayTable(records, tableName):
     except:
         print("Error displaying data")
 
+def makeAccount(connection):
+    cur = connection.cursor()
+    print("Please enter the following information.")
+    firstName = input("First Name: ").capitalize()
+    lastName = input("Last Name: ").capitalize()
+    dob = input("Date of Birth (YYYY-MM-DD): ")
+    cur.execute('SELECT MAX(personID) FROM Person;')
+    maxID = cur.fetchone()[0]
+    nextID = int(maxID) + 1 if maxID else 1000  # Starting from 1000 if no items exist yet
+
+    try:
+        sql = "INSERT INTO Person(" + ", ".join(dbAttributes['Person']) + ") "
+        sql += "VALUES('" + str(nextID) + "', '" + firstName + "', '" + lastName + "', '" + dob + "');"
+
+        cur.execute(sql)
+        print("Account made successfully")
+        connection.commit()
+        return str(nextID)
+    except:
+        print("Error making account")
+        return
 
 def findPersonID(connection, personID):
     cur = connection.cursor()
     sql = "SELECT personID FROM Person WHERE personID = '" + personID + "';"
-    result = cur.execute(sql)
-    if result == None:
+    cur.execute(sql)
+    result = cur.fetchone()
+    if not result:
         choice = input("""ID not found, would you like to
         (1) Register for an account
         (2) Restart
         (Any Other Key) Exit
         """)
         if choice == '1':
-            pass
-            # id = makeAccount()
-            # findPersonID(connection, id)
+            nextID = makeAccount(connection)
+            findPersonID(connection, nextID)
         elif choice == '2':
             findPersonID(connection, input("ID: "))
         else:
             print("Exiting.")
             return False
     else:
-        print("ID found.")
+        print("ID: " + result[0] + " found.")
         return True
 
 
@@ -313,12 +334,13 @@ def borrowBook(connection, personID, itemID):
     borrowDate = borrowDate.strftime('%Y-%m-%d')
 
     try:
-        sql = "INSERT INTO Borrows(" + ", ".join(dbAttributes['Borrows']) + ") "
+        sql = "INSERT INTO Borrows(" + ", ".join(dbAttributes['Borrows'][1:]) + ") "
         sql += "VALUES('" + personID + "', '" + itemID + "', '" + borrowDate + "', '" + dateDue + "', NULL, 0);"
-        print(sql)
         cur = connection.cursor()
         cur.execute(sql)
         print("Item borrowed successfully\n")
+        cur.execute("UPDATE Items SET available = 0 WHERE itemID = '" + itemID + "';")
+        connection.commit()
         return dateDue
     except:
         print("Error borrowing item\n")
@@ -328,20 +350,27 @@ def returnItem(connection, personID):
     cur = connection.cursor()
     if findPersonID(connection, personID):
         sql = "SELECT * FROM Borrows WHERE personID = '" + personID + "';"
-        print("Your Borrowed Items:\n")
-        result = cur.execute(sql)
-        displayTable(result, 'Borrows')
-        choice = input("ID of record you would like to return: ")
-        sqlSelect = "SELECT * FROM Borrows WHERE borrowID = '" + choice + "';"
-        resultFinal = cur.execute(sqlSelect)
-        if resultFinal:
-            sqlDrop = "DELETE FROM Borrows WHERE personID = '" + personID + "' AND borrowID = '" + resultFinal[0][0] + "';"
-            cur.execute(sqlDrop)
-            connection.commit()
-            return True
-        else:
-            print("Invalid selection")
+        cur.execute(sql)
+        results = cur.fetchall()
+        if len(results) == 0:
+            print("No items currently borrowed.")
             return False
+        else:
+            print("Your Borrowed Items:\n")
+            displayTable(results, 'Borrows')
+            returnID = input("ID of record you would like to return: ")
+            sqlSelect = "SELECT * FROM Borrows WHERE borrowID = '" + returnID + "';"
+            resultFinal = cur.execute(sqlSelect)
+            if resultFinal:
+                sqlDrop = "DELETE FROM Borrows WHERE personID = '" + personID + "' AND borrowID = '" + returnID + "';"
+                cur.execute(sqlDrop)
+                cur.execute("UPDATE Items SET available = 1 WHERE itemID = '" + returnID + "';")
+                connection.commit()
+                print("Item returned successfully.")
+                return True
+            else:
+                print("Invalid selection")
+                return False
 
 if __name__ == "__main__":
     createSchema()
