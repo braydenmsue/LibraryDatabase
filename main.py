@@ -102,9 +102,6 @@ while not done:
     #
     elif choice == '6':
         library.requestHelp(conn)
-        # query employees, input to pick one
-        # print(name, "is on their way!")
-
 
     elif choice == 'x':
         print("Exiting application.")
