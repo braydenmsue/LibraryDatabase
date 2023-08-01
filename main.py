@@ -3,10 +3,11 @@ import library
 
 library.createSchema()
 
+
 conn = sqlite3.connect('library.db')
 print("Connection to library.db successful")
 cursor = conn.cursor()
-
+library.insertInto(conn)
 
 done = False
 

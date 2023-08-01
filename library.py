@@ -137,16 +137,16 @@ def insertInto(conn):
     cur = conn.cursor()
     cur.execute('''
                 INSERT OR IGNORE INTO Items(itemID, title, author, type, available)
-                VALUES  ('1001', 'Love You Forever', 'Robert Munsch', 'Children', 1),
-                        ('1002', 'The Paper Bag Princess', 'Robert Munsch', 'Children', 1),
-                        ('1003', 'The Lightning Thief', 'Rick Riordan', 'Fantasy', 1),
-                        ('1004', 'The Sea of Monsters', 'Rick Riordan', 'Fantasy', 1),
-                        ('1005', 'Diary of a Wimpy Kid', 'Jeff Kinney', 'Comedy', 1),
+                VALUES  ('1001', 'Love You Forever', 'Robert Munsch', 'Book', 1),
+                        ('1002', 'The Paper Bag Princess', 'Robert Munsch', 'Book', 1),
+                        ('1003', 'The Lightning Thief', 'Rick Riordan', 'Book', 1),
+                        ('1004', 'Symphony in E Minor', 'Claude Debussy', 'CD', 1),
+                        ('1005', 'The Great Gatsby', 'F. Scott Fitzgerald', 'Online Book', 1),
                         ('1006', 'Rodrick Rules', 'Jeff Kinney', 'Comedy', 1),
-                        ('1007', 'Geronimo Stilton: Lost Treasure of the Emerald Eye', 'Geronimo Stilton', 'Adventure', 1),
+                        ('1007', 'National Geographic', 'David Brindley', 'Magazine', 1),
                         ('1008', 'Geronimo Stilton: The Curse of the Cheese Pyramid', 'Geronimo Stilton', 'Adventure', 1),
                         ('1009', 'Pigs', 'Robert Munsch', 'Children', 1),
-                        ('1010', 'The Battle of the Labyrinth', 'Rick Riordan', 'Fantasy', 1)
+                        ('1010', 'Journal of Medicine', 'Brayden Sue', 'Scientific Journal', 1)
                 ''')
     # print("Inserted items into Items")
 
@@ -197,16 +197,16 @@ def insertInto(conn):
 
     cur.execute('''
         INSERT OR IGNORE INTO FutureItems(fID, title, author, type)
-        VALUES  ('3001', 'Lord of the Flies', 'William Golding', 'Fiction'),
-                ('3002', 'The Plague', 'Albert Camus', 'Fiction'),
-                ('3003', 'Tao Te Ching', 'Lao Tzu', 'Philosophy'),
-                ('3004', 'The Art of War', 'Sun Tzu', 'Military'),
-                ('3005', 'The Pragmatic Programmer', 'Andrew Hunt, David Thomas', 'Computer Science'),
-                ('3006', 'Clean Code', 'Robert C. Martin', 'Computer Science'),
-                ('3007', 'Design Patterns', 'Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides', 'Computer Science'),
-                ('3008', 'Introduction to Algorithms', 'Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein', 'Computer Science'),
-                ('3009', 'Artificial Intelligence: A Modern Approach', 'Stuart Russell, Peter Norvig', 'Computer Science'),
-                ('3010', 'Data Science from Scratch', 'Joel Grus', 'Computer Science')
+        VALUES  ('3001', 'Lord of the Flies', 'William Golding', 'Book'),
+                ('3002', 'The Plague', 'Albert Camus', 'Book'),
+                ('3003', 'Tao Te Ching', 'Lao Tzu', 'Book'),
+                ('3004', 'The Art of War', 'Sun Tzu', 'Book'),
+                ('3005', 'The Pragmatic Programmer', 'Andrew Hunt, David Thomas', 'Book'),
+                ('3006', 'Clean Code', 'Robert C. Martin', 'Book'),
+                ('3007', 'Design Patterns', 'Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides', 'Book'),
+                ('3008', 'Introduction to Algorithms', 'Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein', 'Book'),
+                ('3009', 'Artificial Intelligence: A Modern Approach', 'Stuart Russell, Peter Norvig', 'Book'),
+                ('3010', 'Data Science from Scratch', 'Joel Grus', 'Book')
                 ''')
     # print("Inserted records into FutureItems")
     conn.commit()
@@ -249,7 +249,7 @@ def displayTable(records, tableName):
     try:
         table = pd.DataFrame(records, columns=dbAttributes[tableName])
         print("\n")
-        topLine = "------------------------------  " + tableName + "  ------------------------------"
+        topLine = "------------------------------------------------  " + tableName + "  ------------------------------------------------"
         print(topLine)
         print(table.to_string(index=False))
         print("\n")
