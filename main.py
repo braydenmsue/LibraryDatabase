@@ -28,21 +28,28 @@ while not done:
         if len(results) > 1:
             selectID = input("ID of required item: ")
             results = library.searchItems(conn, title, author, selectID)
-            assert len(results) == 1
+            choice = ''
+            while choice not in ['Y', 'N']:
+                choice = input("Borrow this book (y/n)?").upper()
+                if choice == 'Y':
+                    personID = input("Please enter your ID: ")
+                    if library.findPersonID(conn, personID):
+                        dateDue = library.borrowBook(conn, personID, results[0][0])
+                        if dateDue:
+                            print("Please return by " + dateDue)
+                        else:
+                            choice = 'retry'
 
-            choice = input("Borrow this book (y/n)?").upper()
-            if choice == 'Y':
-                print(results[0]);
-              # insert into borrows
-            elif choice == 'N':
-              continue
+                elif choice == 'N':
+                    continue
+                else:
+                    print("Please enter Y (yes) or N (no).")
+
     elif choice == '2':
-        pass
-        # input for book in borrows table
-        # results = query
-        # if len(results) == 1
-        # input y/n to return book
-        # if y: update items, delete from borrows
+
+        userID = input("Please enter your ID: ")
+        library.returnItem(conn, userID)
+
     elif choice == '3':
         pass
         # input values of item, form into tuple
