@@ -7,6 +7,7 @@ conn = sqlite3.connect('library.db')
 print("Connection to library.db successful")
 cursor = conn.cursor()
 
+
 done = False
 
 while not done:
@@ -22,12 +23,26 @@ while not done:
     ''')
 
     if choice == '1':
+
+        print("Here is a list of all of the books that we have in our catalogue! Feel free to look around.")
+        cursor.execute("SELECT * FROM Items")
+        rows = cursor.fetchall()
+        library.displayTable(rows, "Items")
+        print("If you want to borrow a book, just fill in the form below and you are good to go!")
+
+        #list of all itemids
+        cursor.execute('SELECT itemID FROM Items')
+        itemIDs = [row[0] for row in cursor.fetchall()]
+
         title = library.capitalizeWords(input("Title: ").strip())
         author = library.capitalizeWords(input("Author: ").strip())
         results = library.searchItems(conn, title, author)
         if len(results) > 0:
             selectID = input("borrowID of required item (x to cancel): ")
             if selectID == 'x':
+                continue
+            if selectID not in (itemIDs):
+                print("Invalid itemID. Please enter a correct itemID.")
                 continue
             results = library.searchItems(conn, title, author, selectID)
             choice = ''
@@ -46,6 +61,8 @@ while not done:
                     continue
                 else:
                     print("Please enter Y (yes) or N (no).")
+        else:
+            print("No items found matching your search :(")
 
     elif choice == '2':
 
@@ -82,11 +99,12 @@ while not done:
                         print("Please enter Y (yes) or N (no).")
             else:
                 print("Please re-enter ID")
-
+    #
     elif choice == '6':
-        pass
+        library.requestHelp(conn)
         # query employees, input to pick one
         # print(name, "is on their way!")
+
 
     elif choice == 'x':
         print("Exiting application.")
