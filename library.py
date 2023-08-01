@@ -1,8 +1,8 @@
 import sqlite3
+import pandas as pd
+import os
 
-conn = sqlite3.connect('library.db')
-print("Connected to library.db");
-cur = conn.cursor()
+filePath = os.path.join(os.getcwd(), "library.db")
 
 """
 Executes CREATE TABLE statement
@@ -10,18 +10,27 @@ connection: sqlite3 database connection
 tableStatement: SQL statement in string
 """
 def createSchema():
-    cur = conn.cursor()
-    cur.execute('''
-            CREATE TABLE IF NOT EXISTS Items (
-                itemID CHAR(11) PRIMARY KEY,
-                title CHAR(50),
-                author CHAR(50),
-                type CHAR(50),
-                available INTEGER
-            )    
-        ''')
+    if os.path.exists(filePath):
+        print("Schema already created.")
+    else:
+        conn = sqlite3.connect('library.db')
+        cur = conn.cursor()
+        cur.execute('''
+                CREATE TABLE IF NOT EXISTS Items (
+                    itemID CHAR(11) PRIMARY KEY,
+                    title CHAR(50),
+                    author CHAR(50),
+                    type CHAR(50),
+                    available INTEGER
+                )    
+            ''')
+
+        conn.commit()
+
+    return
     
-def insertInto():
+def insertInto(conn):
+    cur = conn.cursor()
     cur.execute('''
                 INSERT OR IGNORE INTO Items(itemID, title, author, type, available)
                 VALUES  ('1001', 'Love You Forever', 'Robert Munsch', 'Children', 1),
@@ -36,6 +45,7 @@ def insertInto():
                         ('1010', 'The Battle of the Labyrinth', 'Rick Riordan', 'Fantasy', 1)
                 ''')
     print("Inserted items data")
+    conn.commit()
 
 def insertData(connection, insertStatement):
     try:
@@ -62,28 +72,43 @@ def deleteData(connection, deletionStatement):
     except:
         print("Error deleting data")
 
+def capitalizeWords(phraseString):
+    wordList = phraseString.split(' ')
+    wordListC = [word.capitalize() for word in wordList]
+    result = ' '.join(wordListC)
+
+    return result
+
 
 """
-Runs query on database
+Runs query Items table by title and author
 connection: sqlite3 database connection
 queryStatement: SQL statement in string
 """
-def runQuery(connection, queryStatement):
+def searchItems(connection, title, author, id = '-1'):
 
+    condition = ""
+    attributes = ['ID', 'Title', 'Author', 'Type', 'Available']
     try:
+        if id != '-1':
+            condition = "WHERE itemID = '" + id + "';"
+        else:
+            condition = "WHERE title = '" + title + "' OR author = '" + author + "';"
+        sql = "SELECT * FROM Items " + condition
+        print(sql)
+
         cur = connection.cursor()
-        cur.execute(queryStatement)
+        cur.execute(sql)
         results = cur.fetchall()
-        print(results)
+        table = pd.DataFrame(results, columns=attributes)
+        print("-----------------------------------------------------------")
+        print(table.to_string(index=False))
+        print("-----------------------------------------------------------")
+
+        return results
     except:
         print("Error running query")
 
-
-def generateQuery(attributes, tables, condition):
-    attributeList = ', '.join(attributes)
-    table = ' JOIN '.join(tables)
-
-    result = "SELECT ", attributeList, "FROM ", table, "WHERE", condition
 
 if __name__ == "__main__":
     createSchema()
