@@ -333,9 +333,11 @@ def borrowItem(connection, personID, itemID):
     dateDue = (borrowDate + timedelta(days=30)).strftime('%Y-%m-%d')
     borrowDate = borrowDate.strftime('%Y-%m-%d')
     itemRecords = searchItems(connection, '', '', itemID)
+    if itemRecords[0][4] == 0:
+        print("No copies of " + itemRecords[0][1] + " currently available.")
+        return
 
     try:
-        assert(itemRecords[0][4] == 1)
         sql = "INSERT INTO Borrows(" + ", ".join(dbAttributes['Borrows'][1:]) + ") "
         sql += "VALUES('" + personID + "', '" + itemID + "', '" + borrowDate + "', '" + dateDue + "', NULL, 0);"
         cur = connection.cursor()
