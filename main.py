@@ -4,7 +4,6 @@ import library
 library.createSchema()
 
 conn = sqlite3.connect('library.db')
-library.insertInto(conn)
 print("Connection to library.db successful")
 cursor = conn.cursor()
 
@@ -23,11 +22,13 @@ while not done:
     ''')
 
     if choice == '1':
-        title = library.capitalizeWords(input("Title: "))
-        author = library.capitalizeWords(input("Author: "))
+        title = library.capitalizeWords(input("Title: ").strip())
+        author = library.capitalizeWords(input("Author: ").strip())
         results = library.searchItems(conn, title, author)
-        if len(results) > 1:
-            selectID = input("ID of required item: ")
+        if len(results) > 0:
+            selectID = input("ID of required item (x to cancel): ")
+            if selectID == 'x':
+                continue
             results = library.searchItems(conn, title, author, selectID)
             choice = ''
             while choice not in ['Y', 'N']:
