@@ -385,9 +385,9 @@ def donateItem(connection):
     # Increment it by 1 to get the next available itemID
     next_item_id = int(max_item_id) + 1 if max_item_id else 1000  # Starting from 1000 if no items exist yet
 
-    title = capitalizeWords(input("Enter title: "))
-    author = capitalizeWords(input("Enter author: "))
-    item_type = capitalizeWords(input("Enter type: "))
+    title = capitalizeWords(input("Enter title: ").strip())
+    author = capitalizeWords(input("Enter author: ").strip())
+    item_type = capitalizeWords(input("Enter type: ").strip())
 
     try:
         # Insert the item data into the Items table
